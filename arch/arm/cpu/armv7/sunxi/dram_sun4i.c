@@ -694,6 +694,30 @@ unsigned long dramc_init(struct dram_para *para)
 {
 	unsigned long dram_size, actual_density;
 
+	debug("[ dramc_init ]\n");
+	debug("[ dramc_init ] clock: 0x%x\n", para->clock);
+	debug("[ dramc_init ] mbus_clock: 0x%x\n", para->mbus_clock);
+	debug("[ dramc_init ] type: 0x%x\n", para->type);
+	debug("[ dramc_init ] rank_num: 0x%x\n", para->rank_num);
+	debug("[ dramc_init ] density: 0x%x\n", para->density);
+	debug("[ dramc_init ] io_width: 0x%x\n", para->io_width);
+	debug("[ dramc_init ] bus_width: 0x%x\n", para->bus_width);
+	debug("[ dramc_init ] cas: 0x%x\n", para->cas);
+	debug("[ dramc_init ] zq: 0x%x\n", para->zq);
+	debug("[ dramc_init ] odt_en: 0x%x\n", para->odt_en);
+	debug("[ dramc_init ] size: 0x%x\n", para->size);
+	debug("[ dramc_init ] tpr0: 0x%x\n", para->tpr0);
+	debug("[ dramc_init ] tpr1: 0x%x\n", para->tpr1);
+	debug("[ dramc_init ] tpr2: 0x%x\n", para->tpr2);
+	debug("[ dramc_init ] tpr3: 0x%x\n", para->tpr3);
+	debug("[ dramc_init ] tpr4: 0x%x\n", para->tpr4);
+	debug("[ dramc_init ] tpr5: 0x%x\n", para->tpr5);
+	debug("[ dramc_init ] emr1: 0x%x\n", para->emr1);
+	debug("[ dramc_init ] emr2: 0x%x\n", para->emr2);
+	debug("[ dramc_init ] emr3: 0x%x\n", para->emr3);
+	debug("[ dramc_init ] dqs_gating_delay: 0x%x\n", para->dqs_gating_delay);
+	debug("[ dramc_init ] active_windowing: 0x%x\n", para->active_windowing);
+
 	/* If the dram configuration is not provided, use a default */
 	if (!para)
 		return 0;
