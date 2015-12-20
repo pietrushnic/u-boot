@@ -1,5 +1,5 @@
 /* DRAM parameters for auto dram configuration on sun5i and sun7i */
-
+#define DEBUG
 #include <common.h>
 #include <asm/arch/dram.h>
 
@@ -34,5 +34,6 @@ static struct dram_para dram_para = {
 
 unsigned long sunxi_dram_init(void)
 {
+	debug("\n[ sunxi_dram_init ] sun5i\n");
 	return dramc_init(&dram_para);
 }
