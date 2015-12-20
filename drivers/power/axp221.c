@@ -9,7 +9,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 #include <errno.h>
 #include <asm/arch/pmic_bus.h>
@@ -84,6 +84,7 @@ int axp_set_dcdc3(unsigned int mvolt)
 int axp_set_dcdc4(unsigned int mvolt)
 {
 	int ret;
+	debug("[ axp_set_dcdc4 ] axp221\n");
 	u8 cfg = axp221_mvolt_to_cfg(mvolt, 600, 1540, 20);
 
 	if (mvolt == 0)

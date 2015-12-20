@@ -4,6 +4,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+#define DEBUG
 #include <common.h>
 #include <asm/arch/pmic_bus.h>
 #include <axp_pmic.h>
@@ -49,6 +50,8 @@ int axp_set_dcdc3(unsigned int mvolt)
 int axp_set_dcdc4(unsigned int mvolt)
 {
 	u8 target = axp152_mvolt_to_target(mvolt, 700, 3500, 25);
+
+	debug("[ axp_set_dcdc4 ] axp152\n");
 
 	return pmic_bus_write(AXP152_DCDC4_VOLTAGE, target);
 }

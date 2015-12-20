@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 #include <mmc.h>
 #include <axp_pmic.h>
@@ -430,10 +430,12 @@ void sunxi_board_init(void)
 	int power_failed = 0;
 	unsigned long ramsize;
 
+	printf("[ sunxi_board_init ]\n");
 #if defined CONFIG_AXP152_POWER || defined CONFIG_AXP209_POWER || \
 	defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
 	power_failed = axp_init();
 
+	printf("[ sunxi_board_init ] axp_init: 0x%x\n", power_failed);
 #if defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
 	power_failed |= axp_set_dcdc1(CONFIG_AXP_DCDC1_VOLT);
 #endif
@@ -457,6 +459,7 @@ void sunxi_board_init(void)
 #endif
 #ifdef CONFIG_AXP209_POWER
 	power_failed |= axp_set_aldo4(CONFIG_AXP_ALDO4_VOLT);
+	printf("[ sunxi_board_init ] axp_set_aldo4: 0x%x\n", power_failed);
 #endif
 
 #ifdef CONFIG_AXP221_POWER

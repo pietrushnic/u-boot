@@ -8,7 +8,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 #include <asm/arch/p2wi.h>
 #include <asm/arch/rsb.h>
@@ -33,15 +33,19 @@ int pmic_bus_init(void)
 	static int needs_init = 1;
 	__maybe_unused int ret;
 
+	debug("[ pmic_bus_init ]\n");
+	debug("[ pmic_bus_init ] needs_init: %d\n", needs_init);
 	if (!needs_init)
 		return 0;
 
 #if defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
 # ifdef CONFIG_MACH_SUN6I
+	debug("[ pmic_bus_init ] call p2wi_init\n");
 	p2wi_init();
 	ret = p2wi_change_to_p2wi_mode(AXP221_CHIP_ADDR, AXP221_CTRL_ADDR,
 				       AXP221_INIT_DATA);
 # else
+	debug("[ pmic_bus_init ] call rsb_init\n");
 	ret = rsb_init();
 	if (ret)
 		return ret;
@@ -53,6 +57,7 @@ int pmic_bus_init(void)
 #endif
 
 	needs_init = 0;
+	debug("[ pmic_bus_init ] exit\n");
 	return 0;
 }
 
@@ -91,6 +96,7 @@ int pmic_bus_setbits(u8 reg, u8 bits)
 	int ret;
 	u8 val;
 
+	debug("[ pmic_bus_setbits ] reg: 0x%x, bits: 0x%x\n", reg, bits);
 	ret = pmic_bus_read(reg, &val);
 	if (ret)
 		return ret;
@@ -104,6 +110,7 @@ int pmic_bus_clrbits(u8 reg, u8 bits)
 	int ret;
 	u8 val;
 
+	debug("[ pmic_bus_clrbits ] reg: 0x%x, bits: 0x%x\n", reg, bits);
 	ret = pmic_bus_read(reg, &val);
 	if (ret)
 		return ret;

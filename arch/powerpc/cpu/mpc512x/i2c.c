@@ -7,6 +7,7 @@
  * Based on the MPC5xxx code.
  */
 
+#define DEBUG
 #include <common.h>
 #include <asm/io.h>
 
@@ -191,6 +192,7 @@ void i2c_init (int speed, int saddr)
 	volatile immap_t *im = (immap_t *) CONFIG_SYS_IMMR;
 	int i;
 
+	debug("i2c_init\n");
 	for (i = 0; i < I2C_BUS_CNT; i++){
 		volatile i2c512x_dev_t *regs = &im->i2c.dev[i];
 

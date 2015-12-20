@@ -9,7 +9,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 #include <mmc.h>
 #include <i2c.h>
@@ -200,6 +200,7 @@ void board_init_f(ulong dummy)
 {
 	spl_init();
 	preloader_console_init();
+	puts("[ board_init_f ] preloader_console_init finished\n");
 
 #ifdef CONFIG_SPL_I2C_SUPPORT
 	/* Needed early by sunxi_board_init if PMU is enabled */

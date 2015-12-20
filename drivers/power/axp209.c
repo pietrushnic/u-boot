@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 #include <asm/arch/pmic_bus.h>
 #include <axp_pmic.h>
@@ -24,6 +24,7 @@ int axp_set_dcdc2(unsigned int mvolt)
 	int rc;
 	u8 cfg, current;
 
+	debug("[ axp_set_dcdc2 ] DCDC2: %d\n", mvolt);
 	if (mvolt == 0)
 		return pmic_bus_clrbits(AXP209_OUTPUT_CTRL,
 					AXP209_OUTPUT_CTRL_DCDC2);
@@ -120,6 +121,8 @@ int axp_set_aldo4(unsigned int mvolt)
 	};
 	u8 cfg, reg;
 
+	debug("[ axp_set_aldo4 ] LDO4 target: %d\n", mvolt);
+
 	if (mvolt == 0)
 		return pmic_bus_clrbits(AXP209_OUTPUT_CTRL,
 					AXP209_OUTPUT_CTRL_LDO4);
@@ -128,11 +131,13 @@ int axp_set_aldo4(unsigned int mvolt)
 	for (cfg = 15; vindex[cfg] > mvolt && cfg > 0; cfg--);
 
 	rc = pmic_bus_read(AXP209_LDO24_VOLTAGE, &reg);
+	debug("[ axp_set_aldo4 ] read LDO4 voltage: 0x%x\n", (reg & 0xf0));
 	if (rc)
 		return rc;
 
 	/* LDO4 configuration is in lower 4 bits */
 	reg = (reg & 0xf0) | (cfg << 0);
+	debug("[ axp_set_aldo4 ] set LDO24 voltage: %d\n", reg);
 	rc = pmic_bus_write(AXP209_LDO24_VOLTAGE, reg);
 	if (rc)
 		return rc;
@@ -145,6 +150,7 @@ int axp_init(void)
 	u8 ver;
 	int i, rc;
 
+	debug("[ axp_init ]\n");
 	rc = pmic_bus_init();
 	if (rc)
 		return rc;
@@ -155,10 +161,12 @@ int axp_init(void)
 
 	/* Low 4 bits is chip version */
 	ver &= 0x0f;
+	debug("[ axp_init ] chip version: 0x%x\n", ver);
 
 	if (ver != 0x1)
 		return -1;
 
+	debug("[ axp_init ] Mask all interrupts\n");
 	/* Mask all interrupts */
 	for (i = AXP209_IRQ_ENABLE1; i <= AXP209_IRQ_ENABLE5; i++) {
 		rc = pmic_bus_write(i, 0);

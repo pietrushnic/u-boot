@@ -20,7 +20,7 @@
  * magic numbers & shifts with no explanations. Hence this code is
  * rather undocumented and full of magic.
  */
-
+#define DEBUG
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
