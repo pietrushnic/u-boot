@@ -435,12 +435,14 @@ void sunxi_board_init(void)
 	defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
 	power_failed = axp_init();
 
-	printf("[ sunxi_board_init ] axp_init: 0x%x\n", power_failed);
+	printf("[ sunxi_board_init ] axp_init ret: 0x%x\n", power_failed);
 #if defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
 	power_failed |= axp_set_dcdc1(CONFIG_AXP_DCDC1_VOLT);
 #endif
 	power_failed |= axp_set_dcdc2(CONFIG_AXP_DCDC2_VOLT);
+	printf("[ sunxi_board_init ] axp_set_dcdc2 ret: 0x%x\n", power_failed);
 	power_failed |= axp_set_dcdc3(CONFIG_AXP_DCDC3_VOLT);
+	printf("[ sunxi_board_init ] axp_set_dcdc3 ret: 0x%x\n", power_failed);
 #if !defined(CONFIG_AXP209_POWER) && !defined(CONFIG_AXP818_POWER)
 	power_failed |= axp_set_dcdc4(CONFIG_AXP_DCDC4_VOLT);
 #endif
@@ -450,16 +452,19 @@ void sunxi_board_init(void)
 
 #ifdef CONFIG_AXP221_POWER
 	power_failed |= axp_set_aldo1(CONFIG_AXP_ALDO1_VOLT);
+	printf("[ sunxi_board_init ] axp_set_aldo1 ret: 0x%x\n", power_failed);
 #endif
 #ifndef CONFIG_AXP818_POWER
 	power_failed |= axp_set_aldo2(CONFIG_AXP_ALDO2_VOLT);
+	printf("[ sunxi_board_init ] axp_set_aldo2 ret: 0x%x\n", power_failed);
 #endif
 #if !defined(CONFIG_AXP152_POWER) && !defined(CONFIG_AXP818_POWER)
 	power_failed |= axp_set_aldo3(CONFIG_AXP_ALDO3_VOLT);
+	printf("[ sunxi_board_init ] axp_set_aldo3 ret: 0x%x\n", power_failed);
 #endif
 #ifdef CONFIG_AXP209_POWER
 	power_failed |= axp_set_aldo4(CONFIG_AXP_ALDO4_VOLT);
-	printf("[ sunxi_board_init ] axp_set_aldo4: 0x%x\n", power_failed);
+	printf("[ sunxi_board_init ] axp_set_aldo4 ret: 0x%x\n", power_failed);
 #endif
 
 #ifdef CONFIG_AXP221_POWER

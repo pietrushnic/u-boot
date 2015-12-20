@@ -35,6 +35,7 @@ int axp_set_dcdc2(unsigned int mvolt)
 
 	cfg = axp209_mvolt_to_cfg(mvolt, 700, 2275, 25);
 
+	debug("[ axp_set_dcdc2 ] Gently set DCDC2 to %d\n", cfg);
 	/* Do we really need to be this gentle? It has built-in voltage slope */
 	while ((rc = pmic_bus_read(AXP209_DCDC2_VOLTAGE, &current)) == 0 &&
 	       current != cfg) {
@@ -56,10 +57,13 @@ int axp_set_dcdc3(unsigned int mvolt)
 	u8 cfg = axp209_mvolt_to_cfg(mvolt, 700, 3500, 25);
 	int rc;
 
+	debug("[ axp_set_dcdc3 ] DCDC3: %d\n", mvolt);
+
 	if (mvolt == 0)
 		return pmic_bus_clrbits(AXP209_OUTPUT_CTRL,
 					AXP209_OUTPUT_CTRL_DCDC3);
 
+	debug("[ axp_set_dcdc3 ] set DCDC3 to %d\n", cfg);
 	rc = pmic_bus_write(AXP209_DCDC3_VOLTAGE, cfg);
 	if (rc)
 		return rc;
@@ -72,6 +76,7 @@ int axp_set_aldo2(unsigned int mvolt)
 	int rc;
 	u8 cfg, reg;
 
+	debug("[ axp_set_aldo2 ] LDO2 target: %d\n", mvolt);
 	if (mvolt == 0)
 		return pmic_bus_clrbits(AXP209_OUTPUT_CTRL,
 					AXP209_OUTPUT_CTRL_LDO2);
@@ -79,11 +84,13 @@ int axp_set_aldo2(unsigned int mvolt)
 	cfg = axp209_mvolt_to_cfg(mvolt, 1800, 3300, 100);
 
 	rc = pmic_bus_read(AXP209_LDO24_VOLTAGE, &reg);
+	debug("[ axp_set_aldo2 ] read LDO2 voltage: 0x%x\n", (reg & 0x0f));
 	if (rc)
 		return rc;
 
 	/* LDO2 configuration is in upper 4 bits */
 	reg = (reg & 0x0f) | (cfg << 4);
+	debug("[ axp_set_aldo2 ] set LDO2 voltage: %d\n", reg);
 	rc = pmic_bus_write(AXP209_LDO24_VOLTAGE, reg);
 	if (rc)
 		return rc;
@@ -96,6 +103,8 @@ int axp_set_aldo3(unsigned int mvolt)
 	u8 cfg;
 	int rc;
 
+	debug("[ axp_set_aldo3 ] LDO3 target: %d\n", mvolt);
+
 	if (mvolt == 0)
 		return pmic_bus_clrbits(AXP209_OUTPUT_CTRL,
 					AXP209_OUTPUT_CTRL_LDO3);
@@ -105,6 +114,7 @@ int axp_set_aldo3(unsigned int mvolt)
 	else
 		cfg = axp209_mvolt_to_cfg(mvolt, 700, 3500, 25);
 
+	debug("[ axp_set_aldo3 ] set LDO3 voltage: %d\n", cfg);
 	rc = pmic_bus_write(AXP209_LDO3_VOLTAGE, cfg);
 	if (rc)
 		return rc;
@@ -137,7 +147,7 @@ int axp_set_aldo4(unsigned int mvolt)
 
 	/* LDO4 configuration is in lower 4 bits */
 	reg = (reg & 0xf0) | (cfg << 0);
-	debug("[ axp_set_aldo4 ] set LDO24 voltage: %d\n", reg);
+	debug("[ axp_set_aldo4 ] set LDO4 voltage: %d\n", reg);
 	rc = pmic_bus_write(AXP209_LDO24_VOLTAGE, reg);
 	if (rc)
 		return rc;
@@ -150,7 +160,6 @@ int axp_init(void)
 	u8 ver;
 	int i, rc;
 
-	debug("[ axp_init ]\n");
 	rc = pmic_bus_init();
 	if (rc)
 		return rc;
