@@ -21,6 +21,7 @@
  * rather undocumented and full of magic.
  */
 
+#define DEBUG
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -61,6 +62,7 @@ static void mctl_ddr3_reset(void)
 	struct sunxi_dram_reg *dram =
 			(struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
 
+	debug("[ mctl_ddr3_reset ]\n");
 #ifdef CONFIG_MACH_SUN4I
 	struct sunxi_timer_reg *timer =
 			(struct sunxi_timer_reg *)SUNXI_TIMER_BASE;
@@ -100,6 +102,7 @@ static void mctl_set_drive(void)
 {
 	struct sunxi_dram_reg *dram = (struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
 
+	debug("[ mctl_set_drive ]\n");
 #ifdef CONFIG_MACH_SUN7I
 	clrsetbits_le32(&dram->mcr, DRAM_MCR_MODE_NORM(0x3) | (0x3 << 28),
 #else
@@ -113,12 +116,16 @@ static void mctl_itm_disable(void)
 {
 	struct sunxi_dram_reg *dram = (struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
 
+	debug("[ mctl_itm_disable ]\n");
+
 	clrsetbits_le32(&dram->ccr, DRAM_CCR_INIT, DRAM_CCR_ITM_OFF);
 }
 
 static void mctl_itm_enable(void)
 {
 	struct sunxi_dram_reg *dram = (struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
+
+	debug("[ mctl_itm_enable ]\n");
 
 	clrbits_le32(&dram->ccr, DRAM_CCR_ITM_OFF);
 }
@@ -134,6 +141,9 @@ static void mctl_itm_reset(void)
 static void mctl_enable_dll0(u32 phase)
 {
 	struct sunxi_dram_reg *dram = (struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
+
+
+	debug("[ mctl_enable_dll0 ]\n");
 
 	clrsetbits_le32(&dram->dllcr[0], 0x3f << 6,
 			((phase >> 16) & 0x3f) << 6);
@@ -165,6 +175,8 @@ static void mctl_enable_dllx(u32 phase)
 {
 	struct sunxi_dram_reg *dram = (struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
 	u32 i, number_of_lanes;
+
+	debug("[ mctl_enable_dllx ]\n");
 
 	number_of_lanes = mctl_get_number_of_lanes();
 
@@ -243,6 +255,7 @@ static void mctl_setup_dram_clock(u32 clk, u32 mbus_clk)
 	u32 pll5p_div, pll6x_div;
 	u32 pll5p_rate, pll6x_rate;
 
+	debug("[ mctl_setup_dram_clock ] setup DRAM PLL\n");
 	/* setup DRAM PLL */
 	reg_val = readl(&ccm->pll5_cfg);
 	reg_val &= ~CCM_PLL5_CTRL_M_MASK;		/* set M to 0 (x1) */
@@ -286,12 +299,15 @@ static void mctl_setup_dram_clock(u32 clk, u32 mbus_clk)
 	}
 	reg_val &= ~CCM_PLL5_CTRL_VCO_GAIN;		/* PLL VCO Gain off */
 	reg_val |= CCM_PLL5_CTRL_EN;			/* PLL On */
+
+	debug("[ mctl_setup_dram_clock ] reg_val: 0x%x\n", reg_val);
 	writel(reg_val, &ccm->pll5_cfg);
 	udelay(5500);
 
 	setbits_le32(&ccm->pll5_cfg, CCM_PLL5_CTRL_DDR_CLK);
 
 #if defined(CONFIG_MACH_SUN4I) || defined(CONFIG_MACH_SUN7I)
+	debug("[ mctl_setup_dram_clock ] reset GPS\n");
 	/* reset GPS */
 	clrbits_le32(&ccm->gps_clk_cfg, CCM_GPS_CTRL_RESET | CCM_GPS_CTRL_GATE);
 	setbits_le32(&ccm->ahb_gate0, CCM_AHB_GATE_GPS);
@@ -299,10 +315,12 @@ static void mctl_setup_dram_clock(u32 clk, u32 mbus_clk)
 	clrbits_le32(&ccm->ahb_gate0, CCM_AHB_GATE_GPS);
 #endif
 
+	debug("[ mctl_setup_dram_clock ] setup MBUS clock\n");
 	/* setup MBUS clock */
 	if (!mbus_clk)
 		mbus_clk = 300;
 
+	debug("[ mctl_setup_dram_clock ] PLL5P and PLL6 are the potential clock sources for MBUS\n");
 	/* PLL5P and PLL6 are the potential clock sources for MBUS */
 	pll6x_clk = clock_get_pll6() / 1000000;
 #ifdef CONFIG_MACH_SUN7I
@@ -316,11 +334,13 @@ static void mctl_setup_dram_clock(u32 clk, u32 mbus_clk)
 
 	if (pll6x_div <= 16 && pll6x_rate > pll5p_rate) {
 		/* use PLL6 as the MBUS clock source */
+		debug("[ mctl_setup_dram_clock ] use PLL6 as the MBUS clock source\n");
 		reg_val = CCM_MBUS_CTRL_GATE |
 			  CCM_MBUS_CTRL_CLK_SRC(CCM_MBUS_CTRL_CLK_SRC_PLL6) |
 			  CCM_MBUS_CTRL_N(CCM_MBUS_CTRL_N_X(1)) |
 			  CCM_MBUS_CTRL_M(CCM_MBUS_CTRL_M_X(pll6x_div));
 	} else if (pll5p_div <= 16) {
+		debug("[ mctl_setup_dram_clock ] use PLL5P as the MBUS clock source\n");
 		/* use PLL5P as the MBUS clock source */
 		reg_val = CCM_MBUS_CTRL_GATE |
 			  CCM_MBUS_CTRL_CLK_SRC(CCM_MBUS_CTRL_CLK_SRC_PLL5) |
@@ -329,12 +349,14 @@ static void mctl_setup_dram_clock(u32 clk, u32 mbus_clk)
 	} else {
 		panic("Bad mbus_clk\n");
 	}
+	debug("[ mctl_setup_dram_clock ] reg_val: 0x%x\n", reg_val);
 	writel(reg_val, &ccm->mbus_clk_cfg);
 
 	/*
 	 * open DRAMC AHB & DLL register clock
 	 * close it first
 	 */
+	debug("[ mctl_setup_dram_clock ] close DRAMC AHB & DLL register clock\n");
 #if defined(CONFIG_MACH_SUN5I) || defined(CONFIG_MACH_SUN7I)
 	clrbits_le32(&ccm->ahb_gate0, CCM_AHB_GATE_SDRAM | CCM_AHB_GATE_DLL);
 #else
@@ -342,6 +364,7 @@ static void mctl_setup_dram_clock(u32 clk, u32 mbus_clk)
 #endif
 	udelay(22);
 
+	debug("[ mctl_setup_dram_clock ] open DRAMC AHB & DLL register clock\n");
 	/* then open it */
 #if defined(CONFIG_MACH_SUN5I) || defined(CONFIG_MACH_SUN7I)
 	setbits_le32(&ccm->ahb_gate0, CCM_AHB_GATE_SDRAM | CCM_AHB_GATE_DLL);
@@ -482,6 +505,7 @@ static void mctl_set_cke_delay(void)
 {
 	struct sunxi_dram_reg *dram = (struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
 
+	debug("[ mctl_set_cke_delay ]\n");
 	/* The CKE delay is represented in DRAM clock cycles, multiplied by N
 	 * (where N=2 for sun4i/sun5i and N=3 for sun7i). Here it is set to
 	 * the maximum possible value 0x1ffff, just like in the Allwinner's
@@ -513,6 +537,8 @@ static void mctl_set_impedance(u32 zq, bool odt_en)
 	struct sunxi_dram_reg *dram = (struct sunxi_dram_reg *)SUNXI_DRAMC_BASE;
 	u32 reg_val;
 	u32 zprog = zq & 0xFF, zdata = (zq >> 8) & 0xFFFFF;
+
+	debug("[ mctl_set_impedance ]\n");
 
 #ifndef CONFIG_MACH_SUN7I
 	/* Appears that some kind of automatically initiated default
@@ -566,6 +592,7 @@ static unsigned long dramc_init_helper(struct dram_para *para)
 	u32 density;
 	int ret_val;
 
+	debug("[ dramc_init_helper ]\n");
 	/*
 	 * only single rank DDR3 is supported by this code even though the
 	 * hardware can theoretically support DDR2 and up to two ranks
@@ -573,18 +600,22 @@ static unsigned long dramc_init_helper(struct dram_para *para)
 	if (para->type != DRAM_MEMORY_TYPE_DDR3 || para->rank_num != 1)
 		return 0;
 
+	debug("[ dramc_init_helper ] setup DRAM relative clock\n");
 	/* setup DRAM relative clock */
 	mctl_setup_dram_clock(para->clock, para->mbus_clock);
 
+	debug("[ dramc_init_helper ] Disable any pad power save control\n");
 	/* Disable any pad power save control */
 	mctl_disable_power_save();
 
 	mctl_set_drive();
 
+	debug("[ dramc_init_helper ] dram clock off\n");
 	/* dram clock off */
 	dramc_clock_output_en(0);
 
 #ifdef CONFIG_MACH_SUN4I
+	debug("[ dramc_init_helper ] select dram controller 1\n");
 	/* select dram controller 1 */
 	writel(DRAM_CSEL_MAGIC, &dram->csel);
 #endif
@@ -592,6 +623,7 @@ static unsigned long dramc_init_helper(struct dram_para *para)
 	mctl_itm_disable();
 	mctl_enable_dll0(para->tpr3);
 
+	debug("[ dramc_init_helper ] configure external DRAM\n");
 	/* configure external DRAM */
 	reg_val = DRAM_DCR_TYPE_DDR3;
 	reg_val |= DRAM_DCR_IO_WIDTH(para->io_width >> 3);
@@ -616,6 +648,8 @@ static unsigned long dramc_init_helper(struct dram_para *para)
 	reg_val |= DRAM_DCR_RANK_SEL(para->rank_num - 1);
 	reg_val |= DRAM_DCR_CMD_RANK_ALL;
 	reg_val |= DRAM_DCR_MODE(DRAM_DCR_MODE_INTERLEAVE);
+
+	debug("[ dramc_init_helper ] reg_val: 0x%x\n", reg_val);
 	writel(reg_val, &dram->dcr);
 
 	dramc_clock_output_en(1);
@@ -628,13 +662,16 @@ static unsigned long dramc_init_helper(struct dram_para *para)
 
 	udelay(1);
 
+	debug("[ dramc_init_helper ] await_bits_clear DRAM_CCR_INIT\n");
 	await_bits_clear(&dram->ccr, DRAM_CCR_INIT);
 
 	mctl_enable_dllx(para->tpr3);
 
+	debug("[ dramc_init_helper ] set refresh period\n");
 	/* set refresh period */
 	dramc_set_autorefresh_cycle(para->clock, density);
 
+	debug("[ dramc_init_helper ] set timing parameters\n");
 	/* set timing parameters */
 	writel(para->tpr0, &dram->tpr0);
 	writel(para->tpr1, &dram->tpr1);
@@ -646,36 +683,45 @@ static unsigned long dramc_init_helper(struct dram_para *para)
 #endif
 	reg_val |= DRAM_MR_CAS_LAT(para->cas - 4);
 	reg_val |= DRAM_MR_WRITE_RECOVERY(ddr3_write_recovery(para->clock));
+
+	debug("[ dramc_init_helper ] reg_val: 0x%x\n", reg_val);
 	writel(reg_val, &dram->mr);
 
 	writel(para->emr1, &dram->emr);
 	writel(para->emr2, &dram->emr2);
 	writel(para->emr3, &dram->emr3);
 
+	debug("[ dramc_init_helper ] disable drift compensation and set passive DQS window mode\n");
 	/* disable drift compensation and set passive DQS window mode */
 	clrsetbits_le32(&dram->ccr, DRAM_CCR_DQS_DRIFT_COMP, DRAM_CCR_DQS_GATE);
 
 #ifdef CONFIG_MACH_SUN7I
+	debug("[ dramc_init_helper ] Command rate timing mode 2T & 1T\n");
 	/* Command rate timing mode 2T & 1T */
 	if (para->tpr4 & 0x1)
 		setbits_le32(&dram->ccr, DRAM_CCR_COMMAND_RATE_1T);
 #endif
+	debug("[ dramc_init_helper ] initialize external DRAM\n");
 	/* initialize external DRAM */
 	mctl_ddr3_initialize();
 
+	debug("[ dramc_init_helper ] scan read pipe value\n");
 	/* scan read pipe value */
 	mctl_itm_enable();
 
+	debug("[ dramc_init_helper ] Hardware DQS gate training\n");
 	/* Hardware DQS gate training */
 	ret_val = dramc_scan_readpipe();
 
 	if (ret_val < 0)
 		return 0;
 
+	debug("[ dramc_init_helper ] allow to override the DQS training results with a custom delay\n");
 	/* allow to override the DQS training results with a custom delay */
 	if (para->dqs_gating_delay)
 		mctl_set_dqs_gating_delay(0, para->dqs_gating_delay);
 
+	debug("[ dramc_init_helper ] set the DQS gating window type\n");
 	/* set the DQS gating window type */
 	if (para->active_windowing)
 		clrbits_le32(&dram->ccr, DRAM_CCR_DQS_GATE);
@@ -684,6 +730,7 @@ static unsigned long dramc_init_helper(struct dram_para *para)
 
 	mctl_itm_reset();
 
+	debug("[ dramc_init_helper ] configure all host port\n");
 	/* configure all host port */
 	mctl_configure_hostport();
 
@@ -715,10 +762,12 @@ unsigned long dramc_init(struct dram_para *para)
 
 	dram_size = dramc_init_helper(para);
 	if (!dram_size) {
+		debug("[ dramc_init ] 32-bit bus width failed, try 16-bit bus width instead\n");
 		/* if 32-bit bus width failed, try 16-bit bus width instead */
 		para->bus_width = 16;
 		dram_size = dramc_init_helper(para);
 		if (!dram_size) {
+			debug("[ dramc_init ] 16-bit bus width also failed, then bail out\n");
 			/* if 16-bit bus width also failed, then bail out */
 			return dram_size;
 		}
@@ -728,6 +777,7 @@ unsigned long dramc_init(struct dram_para *para)
 	actual_density = (dram_size >> 17) * para->io_width / para->bus_width;
 
 	if (actual_density != para->density) {
+		debug("[ dramc_init ] update the density and re-initialize DRAM again\n");
 		/* update the density and re-initialize DRAM again */
 		para->density = actual_density;
 		dram_size = dramc_init_helper(para);
