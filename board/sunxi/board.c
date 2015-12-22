@@ -477,8 +477,8 @@ void sunxi_board_init(void)
 	power_failed |= axp_set_eldo(3, CONFIG_AXP_ELDO3_VOLT);
 #endif
 #endif
-	printf("DRAM:");
 	ramsize = sunxi_dram_init();
+	printf("DRAM:");
 	printf(" %lu MiB\n", ramsize >> 20);
 	if (!ramsize)
 		hang();

@@ -739,10 +739,12 @@ unsigned long dramc_init(struct dram_para *para)
 
 	dram_size = dramc_init_helper(para);
 	if (!dram_size) {
+		debug("[ dramc_init ] 32-bit bus width failed, try 16-bit bus width instead\n");
 		/* if 32-bit bus width failed, try 16-bit bus width instead */
 		para->bus_width = 16;
 		dram_size = dramc_init_helper(para);
 		if (!dram_size) {
+			debug("[ dramc_init ] 16-bit bus width also failed\n");
 			/* if 16-bit bus width also failed, then bail out */
 			return dram_size;
 		}
@@ -752,6 +754,7 @@ unsigned long dramc_init(struct dram_para *para)
 	actual_density = (dram_size >> 17) * para->io_width / para->bus_width;
 
 	if (actual_density != para->density) {
+		debug("[ dramc_init ] update the density and re-initialize DRAM again\n");
 		/* update the density and re-initialize DRAM again */
 		para->density = actual_density;
 		dram_size = dramc_init_helper(para);

@@ -204,9 +204,11 @@ void board_init_f(ulong dummy)
 
 #ifdef CONFIG_SPL_I2C_SUPPORT
 	/* Needed early by sunxi_board_init if PMU is enabled */
+	puts("[ board_init_f ] i2c_init\n");
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
 	sunxi_board_init();
+	puts("[ board_init_f ] sunxi_board_init finished\n");
 }
 #endif
 
