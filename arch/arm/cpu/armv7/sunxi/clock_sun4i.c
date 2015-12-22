@@ -9,7 +9,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -123,6 +123,7 @@ void clock_set_pll1(unsigned int hz)
 	struct sunxi_ccm_reg * const ccm =
 		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
 
+	debug("[ clock_set_pll1 ] Find target frequency\n");
 	/* Find target frequency */
 	while (pll1_para[i].freq > hz)
 		i++;
@@ -131,6 +132,7 @@ void clock_set_pll1(unsigned int hz)
 	if (! hz)
 		hz = 384000000;
 
+	debug("[ clock_set_pll1 ] Calculate system clock divisors\n");
 	/* Calculate system clock divisors */
 	axi = DIV_ROUND_UP(hz, 432000000);	/* Max 450MHz */
 	ahb = DIV_ROUND_UP(hz/axi, 204000000);	/* Max 250MHz */
@@ -138,6 +140,7 @@ void clock_set_pll1(unsigned int hz)
 
 	printf("CPU: %uHz, AXI/AHB/APB: %d/%d/%d\n", hz, axi, ahb, apb0);
 
+	debug("[ clock_set_pll1 ] Map divisors to register values\n");
 	/* Map divisors to register values */
 	axi = axi - 1;
 	if (ahb > 4)
@@ -151,6 +154,7 @@ void clock_set_pll1(unsigned int hz)
 
 	apb0 = apb0 - 1;
 
+	debug("[ clock_set_pll1 ] Switch to 24MHz clock while changing PLL1\n");
 	/* Switch to 24MHz clock while changing PLL1 */
 	writel(AXI_DIV_1 << AXI_DIV_SHIFT |
 	       AHB_DIV_2 << AHB_DIV_SHIFT |
@@ -159,6 +163,7 @@ void clock_set_pll1(unsigned int hz)
 	       &ccm->cpu_ahb_apb0_cfg);
 	sdelay(20);
 
+	debug("[ clock_set_pll1 ] Configure sys clock divisors\n");
 	/* Configure sys clock divisors */
 	writel(axi << AXI_DIV_SHIFT |
 	       ahb << AHB_DIV_SHIFT |
@@ -166,10 +171,12 @@ void clock_set_pll1(unsigned int hz)
 	       CPU_CLK_SRC_OSC24M << CPU_CLK_SRC_SHIFT,
 	       &ccm->cpu_ahb_apb0_cfg);
 
+	debug("[ clock_set_pll1 ] Configure PLL1 at the desired frequency\n");
 	/* Configure PLL1 at the desired frequency */
 	writel(pll1_para[i].pll1_cfg, &ccm->pll1_cfg);
 	sdelay(200);
 
+	debug("[ clock_set_pll1 ] Switch CPU to PLL1\n");
 	/* Switch CPU to PLL1 */
 	writel(axi << AXI_DIV_SHIFT |
 	       ahb << AHB_DIV_SHIFT |
